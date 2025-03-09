@@ -11,6 +11,7 @@ import {
 } from "react-icons/fa";
 import { setupScrollAnimations } from "../../../utils/animations";
 import { COMPANY_DATA } from "../../../constants/placeholder";
+import Swal from "sweetalert2";
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -21,6 +22,7 @@ const Contact = () => {
   });
 
   const [isMessageTypeOpen, setIsMessageTypeOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Message type options
   const messageTypes = [
@@ -57,17 +59,54 @@ const Contact = () => {
     setIsMessageTypeOpen(false);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Form submission logic would go here
-    alert(
-      `Thank you for your ${
-        formData.messageType || "message"
-      }! We will get back to you soon.`
-    );
-    setFormData({ name: "", email: "", messageType: "", message: "" });
-  };
+    setIsSubmitting(true);
+    try {
+      const response = await fetch("https://formspree.io/f/meoajpwe", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
 
+      if (response.ok) {
+        Swal.fire({
+          icon: "success",
+          title: "Message Sent!",
+          text: "Your message has been sent successfully. We will get back to you soon.",
+          confirmButtonColor: "#CD7F32",
+        });
+
+        // Reset form after successful submission
+        setFormData({
+          name: "",
+          email: "",
+          phone: "",
+          message: "",
+          messageType: "",
+        });
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text: "Failed to send message. Please try again later.",
+          confirmButtonColor: "#CD7F32",
+        });
+      }
+    } catch (error) {
+      console.log(error);
+      Swal.fire({
+        icon: "error",
+        title: "Network Error",
+        text: "An error occurred. Please check your internet connection and try again.",
+        confirmButtonColor: "#CD7F32",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   return (
     <section
       id="contact"
@@ -117,11 +156,7 @@ const Contact = () => {
                   Send Us a Message
                 </h3>
 
-                <form
-                  action="https://formspree.io/f/meoajpwe"
-                  method="POST"
-                  className="space-y-6"
-                >
+                <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label
@@ -232,24 +267,29 @@ const Contact = () => {
                   <button
                     type="submit"
                     className="group relative overflow-hidden w-full bg-secondary-500 text-white font-medium uppercase rounded-full px-6 py-4 hover:bg-secondary-600 transition-all duration-300 shadow-lg"
+                    disabled={isSubmitting}
                   >
-                    <span className="relative z-10 flex items-center justify-center">
-                      Send Message
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5 ml-2 transition-transform duration-300 group-hover:translate-x-1"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M14 5l7 7m0 0l-7 7m7-7H3"
-                        />
-                      </svg>
-                    </span>
+                    {isSubmitting ? (
+                      <span className="inline-block h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                    ) : (
+                      <span className="relative z-10 flex items-center justify-center">
+                        Send Message
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5 ml-2 transition-transform duration-300 group-hover:translate-x-1"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M14 5l7 7m0 0l-7 7m7-7H3"
+                          />
+                        </svg>
+                      </span>
+                    )}
                   </button>
                 </form>
               </div>
